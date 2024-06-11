@@ -33,14 +33,28 @@ Question: {question}
 Helpful Answer:"""
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"],template=template,)
 
-# Run chain
-from langchain.chains import RetrievalQA
-question = "What must the competent authority do when taking action under sub-section (3) of section 4, and how are disputes regarding compensation handled?"
-qa_chain = RetrievalQA.from_chain_type(llm,
-                                       retriever=vectordb.as_retriever(),
-                                       return_source_documents=True,
-                                       chain_type_kwargs={"prompt": QA_CHAIN_PROMPT})
 
+from langchain.memory import ConversationBufferMemory
+memory = ConversationBufferMemory(
+    memory_key="chat_history",
+    return_messages=True
+)
 
-result = qa_chain.invoke({"query": question})
-print(result['result'])
+from langchain.chains import ConversationalRetrievalChain
+retriever=vectordb.as_retriever()
+qa = ConversationalRetrievalChain.from_llm(
+    llm,
+    retriever=retriever,
+    memory=memory
+)
+
+question = "What action must the Central Government take after considering the report under section 8 regarding the acquisition of land or rights over such land?"
+result = qa.invoke({"question": question})
+
+print(result)
+
+question = "Is there a time limit for making a declaration regarding the acquisition of land or rights over such land covered by a notification under sub-section (1) of section 7 issued after the commencement of the Coal Bearing Areas (Acquisition and Development) Amendment and Validation Act, 1971?"
+result = qa.invoke({"question": question})
+
+print(result)
+
